@@ -37,8 +37,8 @@ body = body + buf
 
 msg.attach(MIMEText(body, 'plain'))
 
-filename = "/home/pi/CWM_DATA/cfg.txt"
-attachment = open("/home/pi/CWM_DATA/cfg.txt", "rb")
+filename = "/home/pi/mu_code/measureGS.py"
+attachment = open("/home/pi/mu_code/measureGS.py", "rb")
 part = MIMEBase('application', 'octet-stream')
 part.set_payload((attachment).read())
 encoders.encode_base64(part)
