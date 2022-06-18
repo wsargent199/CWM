@@ -37,8 +37,8 @@
 
 
 #define USER_ID             "Will"
-#define DEVICE_ID           "CWM_TP2"
-#define DEVICE_CREDENTIAL   "T123TP2a!"
+#define DEVICE_ID           "CWM_TP2A"
+#define DEVICE_CREDENTIAL   "T123TP2Aa!"
 
 #define LED_PIN 0
 
