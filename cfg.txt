@@ -1,6 +1,6 @@
-Chain Name         : TP5
-BaseLine File name : BaseLine_TP5
-Output file Name   : TP5_result
+Chain Name         : TP4A
+BaseLine File name : BaseLine_TP4A
+Output file Name   : TP4A_result
 Output file type   : absolute
 Stretch Limit      : 5.000
 Paint Enable       : no
