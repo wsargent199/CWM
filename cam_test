@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding= UTF-8
+Name = cam_test
+Exec=/usr/bin/python3 /home/pi/mu_code/cam_test.py
+Icon=/home/pi/Pictures/bxx.png
+StartupNotify=true
+Terminal=true
