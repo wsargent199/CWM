@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=400")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=25")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -497,7 +497,7 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    
+    ser.write(bytes("xxx3\r",'UTF-8'))    
     if off_cycles > 1:
         if GPIO.input(13):
             if last_pin_rd == 0:
@@ -531,7 +531,7 @@ while(True):
             w = int(word)
 
     if w == 1:
-        if last_w > 580 and last_w < 585:
+        if last_w == 1999:
             hack_offset = last_w
         else:
             hack_offset = 0
@@ -567,7 +567,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > 2):         #     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > 5):         #     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -865,7 +865,7 @@ while(True):
             
             pix = im.load()
 
-            thresh = 225
+            thresh = 75
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
@@ -1061,7 +1061,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0115      #.00859
+            length_in = lth * .00722      #.00859
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
 
