@@ -68,8 +68,8 @@ while(keepingon):
 		k = k+1
 	cv2.imwrite((lines1),frame)
 	gray = cv2.GaussianBlur(frame, (11,11), 0)
-	cv2.imshow('Before blur', frame)
-	cv2.imshow('after blur', gray)
+	#cv2.imshow('Before blur', frame)
+	#cv2.imshow('after blur', gray)
 	cv2.imwrite((lines),gray)
 	
 	im = Image.open(lines) # Can be many different formats.
@@ -81,11 +81,10 @@ while(keepingon):
 	r.save(post_process_FN)
 	
 	imagex = cv2.imread(post_process_FN,0)
-	cv2.imshow('after threshold', imagex)
+	#cv2.imshow('after threshold', imagex)
 	
-	kkey = cv2.waitKey(1)
-	if kkey == 27: 
-		keepingon = 0
+
+	keepingon = 0
 		
 
 msg = MIMEMultipart()
