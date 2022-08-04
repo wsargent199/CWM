@@ -41,6 +41,7 @@
 #define DEVICE_CREDENTIAL   "T123TP3a!"
 
 #define LED_PIN 0
+#define PAINT_EN_PIN 1
 
 #define RTD_A 3.9083e-3
 #define RTD_B -5.775e-7
@@ -51,9 +52,9 @@
 
 float        Voltage = 3.14;  
 float        Z1,Z2,Z3,Z4,Rt;
-float        tempx = 75;
+float        tempx = 76;
 float        tempy;
-float        tempx_last = 75;
+float        tempx_last = 76;
 float        datatemp;
 float        phase_a_comm,phase_b_comm,phase_c_comm;
 float        avg_current;
@@ -86,6 +87,8 @@ bool         request_frc_temp = 0;
 bool         request_frc_curr = 0;
 bool         request_frc_vib = 0;
 bool         request_frc_survey = 0;
+bool         paint_enable_local = 0;
+bool         paint_enable_local_last = 0;
 
 unsigned int bucket_time_counter = 421;
 unsigned int loop_counter;
@@ -140,6 +143,7 @@ char               tmps4[32] = {"empty\0"};
 char               tmps5[32] = {"empty\0"};
 
 char               S_State[32] = {"idle\0"};
+char               P_State[32] = {"disabled\0"};
 
 unsigned int number_links = 0; 
 unsigned int number_ooc_links = 0;
@@ -216,12 +220,14 @@ int main(int argc, char *argv[])
     	wiringPiSetup();
     	pinMode(LED_PIN, OUTPUT);
     	digitalWrite(LED_PIN, LOW);
+	pinMode(PAINT_EN_PIN, OUTPUT);
+        digitalWrite(PAINT_EN_PIN, LOW);	
 	
-	
-	//printf("before usbserial open\n");
+	printf("before usbserial open\n");
         usbserial = ( serialOpen("/dev/ttyUSB_FTDI_RS485",19200));
-	//printf("after usbserial open\n");
-	//printf("userserial = %d",usbserial);
+        //usbserial = ( serialOpen("/dev/ttyUSB4",19200));
+	printf("after usbserial open\n");
+	printf("userserial = %d",usbserial);
 
 
          thing["chain_curr_link"] >> [](pson &out){ 
@@ -268,7 +274,9 @@ int main(int argc, char *argv[])
          out["S_State"] = (const char*) S_State;  
          }; 
 	 
-
+         thing["paint_metrics"] >> [](pson &out){ 
+         out["P_State"] = (const char*) P_State;  
+         };
 
 	 thing["tmp"] >> [](pson &out){ 
          out["test1"] = tempx;   // tempx;
@@ -294,9 +302,34 @@ int main(int argc, char *argv[])
                 if(in.is_empty()){
                         in = (bool) request_frc_survey;
                 }
+                else{   
+			request_frc_survey = in;
+                        if (request_frc_survey)
+			{
+				digitalWrite(LED_PIN, in ? HIGH : LOW);
+			}
+                }
+        };
+
+	thing["paint_enable"] << [](pson& in){
+		
+                if(in.is_empty()){
+                        in = (bool) paint_enable_local_last;
+                }
                 else{
-			digitalWrite(LED_PIN, in ? HIGH : LOW);
-                        request_frc_survey = in;
+                        paint_enable_local = in;
+			if((paint_enable_local_last == 0)&&(paint_enable_local==1))
+			{
+				if (digitalRead(PAINT_EN_PIN))
+				{
+					digitalWrite(PAINT_EN_PIN, LOW);
+				}
+				else
+                                {
+                                        digitalWrite(PAINT_EN_PIN, HIGH);
+                                }
+			}
+                        paint_enable_local_last  = paint_enable_local;
                 }
         };
 	
@@ -469,27 +502,66 @@ int main(int argc, char *argv[])
 		//blc++;
 		
 		thing.handle();
-		
-		
-		if (request_frc_survey == 0)
+		if ((off_cycles==0)||(off_cycles==99999)||(off_cycles==777777))
 		{
-			S_State[0] = 'I';
-			S_State[1] = 'd';
-			S_State[2] = 'l';
-			S_State[3] = 'e';
-			S_State[4] = 0x00;
+			S_State[0] = 'i';
+                        S_State[1] = 'n';
+                        S_State[2] = ' ';
+                        S_State[3] = 'p';
+			S_State[4] = 'r';
+                        S_State[5] = 'o';
+                        S_State[6] = 'g';
+                        S_State[7] = 'r';
+			S_State[8] = 'e';
+                        S_State[9] = 's';
+                        S_State[10] = 's';
+                        S_State[11] = 0x00;
 		}
-		if (request_frc_survey == 1)
+		else
 		{
-			S_State[0] = 'a';
-			S_State[1] = 'r';
-			S_State[2] = 'm';
-			S_State[3] = 'e';
-			S_State[4] = 'd';			
-			S_State[5] = 0x00;
-		}	
+		
+                	if (digitalRead(LED_PIN)==0)
+			{
+				S_State[0] = 'I';
+				S_State[1] = 'd';
+				S_State[2] = 'l';
+				S_State[3] = 'e';
+				S_State[4] = 0x00;
+			}
+                	else
+			{
+				S_State[0] = 'a';
+				S_State[1] = 'r';
+				S_State[2] = 'm';
+				S_State[3] = 'e';
+				S_State[4] = 'd';			
+				S_State[5] = 0x00;
+			}
+		}
 	
-
+                if (digitalRead(PAINT_EN_PIN)==0)            
+                {
+                        P_State[0] = 'd';
+                        P_State[1] = 'i';
+                        P_State[2] = 's';
+                        P_State[3] = 'a';
+                        P_State[4] = 'b';
+                        P_State[5] = 'l';
+                        P_State[6] = 'e';
+                        P_State[7] = 'd';
+                        P_State[8] = 0x00;
+                }
+                else
+                {
+                        P_State[0] = 'e';
+                        P_State[1] = 'n';
+                        P_State[2] = 'a';
+                        P_State[3] = 'b';
+                        P_State[4] = 'l';
+                        P_State[5] = 'e';
+                        P_State[6] = 'd';
+                        P_State[7] = 0x00;
+                }
 
 		if ((our_input_fifo1_filestream != -1)&&(1))
                 {
@@ -681,7 +753,8 @@ int main(int argc, char *argv[])
 
 
 
-		//thing.handle();            
+		//thing.handle();           
+		printf("userserial = %d\n",usbserial);
 		
 		if(usbserial != -1)
 		{		
@@ -689,15 +762,34 @@ int main(int argc, char *argv[])
 			switch(drv_mon_state) 
 			{	 
 					case 0:    //  rx temperature      xxx.xx  lf
+
+							rxbuffer[0] = 0x00;	                                                        printf(" %d ",rxbuffer[0]);
+                                                        rxbuffer[1] = 0x00;
+                                                        rxbuffer[2] = 0x00;
+                                                        rxbuffer[3] = 0x00;
+                                                        rxbuffer[4] = 0x00;
+							rxbuffer[5] = 0x00;
+							rxbuffer[6] = 0x00;
 							while (serialDataAvail(usbserial) )
 							{
 							  in_char = serialGetchar (usbserial) ;
 							  rxbuffer[indexx] = in_char;
 							  if (in_char == 0x0a) break;
-							  if (indexx  < 128) indexx++;
+							  if (indexx  < 10) indexx++;
 							} 
 							
-			
+							printf(" %d ",rxbuffer[0]);
+							printf(" %d ",rxbuffer[1]);
+							printf(" %d ",rxbuffer[2]);
+							printf(" %d ",rxbuffer[3]);
+							printf(" %d ",rxbuffer[4]);
+							printf(" %d ",rxbuffer[5]);
+							printf(" %d \n",rxbuffer[6]);
+							//printf(rxbuffer[2]);
+							//printf(rxbuffer[3]);
+							//printf(rxbuffer[4]);
+                                                        //printf(rxbuffer[5]);
+                                                        //printf(rxbuffer[6]);
 
 							if ((rxbuffer[indexx-3] == 0x2e)&&(indexx==6))
 							{
@@ -713,8 +805,8 @@ int main(int argc, char *argv[])
 								  // convert to F for now 
 								  tempx *= 1.8;
 								  tempx += 32;
-								  
-								  if ((tempx < 55) || (tempx > 160))
+								  printf("%f deg f\n",tempx);
+								  if ((tempx < 30) || (tempx > 180))
 								  {
 									   tempx = tempx_last;
 								  }
@@ -728,7 +820,7 @@ int main(int argc, char *argv[])
 									temperature_alarm = 1;
 									tempy = tempx;
 									pson datatemp = tempy;
-									thing.call_endpoint("OverTempEmail", datatemp); 
+									thing.call_endpoint("TP3_overtemp_email", datatemp); 
 								  }
 
 
@@ -740,19 +832,28 @@ int main(int argc, char *argv[])
 							}
 							serialFlush (usbserial);
 							serialPutchar(usbserial, '2') ;  //  '2' request current avgs
-							drv_mon_state = 1;               //   1
+							printf("sending a 2 \n");
+							drv_mon_state = 2;               //   1
 
 					break;
 				
 					case 1:     //  rx current avgs
-					
+							
+							
 							while (serialDataAvail(usbserial) )
 							{
 								in_char = serialGetchar (usbserial) ;
 								rxbuffer[indexx] = in_char;
 								if (in_char == 0x0a) break;
-								if (indexx  < 128) indexx++;
+								if (indexx  < 10) indexx++;
 							}
+
+                                                        //printf(" %d ",rxbuffer[0]);
+                                                        //printf(" %d ",rxbuffer[1]);
+                                                        //printf(" %d ",rxbuffer[2]);
+                                                        //printf(" %d ",rxbuffer[3]);
+                                                        //printf(" %d ",rxbuffer[4]);
+                                                        //printf(" %d \n",rxbuffer[5]);
 							
 							
 							
@@ -786,11 +887,17 @@ int main(int argc, char *argv[])
 
 							}
 							serialFlush (usbserial);
-							serialPutchar(usbserial, '3') ;   
-							drv_mon_state = 0;                
+							serialPutchar(usbserial, '3');
+							printf("sending a 3\n");   
+							drv_mon_state = 3;                
 
 					break;		
-				
+					case 2:
+							drv_mon_state = 1;
+					break;
+					case 3:
+							drv_mon_state = 0;
+                                        break;
 							
 			
 				
