@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=25")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=500")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -201,7 +201,9 @@ chain_direction = 'rtl'
 send_email = 'yes'
 fromaddr = "cwm.sn.1021@gmail.com"
 toaddr = "sargentw@gmail.com;wsargent199@yahoo.com"
-password = "digilube1021"
+password = "qoiasyxzcoytkvtf"
+off_cycles_cfg = "1000"
+downstream = "10"
 
 
 
@@ -213,7 +215,8 @@ GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(13, GPIO.IN)
 GPIO.setup(37, GPIO.OUT)
-
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(12, GPIO.OUT)
 
 GPIO.output(37, GPIO.HIGH)
 
@@ -357,7 +360,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
         print("to address > ",toaddr)
 
     #read the origin address line
-    buf10 = reader.readline()                       # read entire line
+    buf10 = reader.readline()                 # read entire line
     fromaddr = buf10[21:(len(buf10)-1)]       # cut out yes/no part
 
     if (debug == 1):
@@ -365,10 +368,27 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     #read the email password line
     buf10 = reader.readline()                       # read entire line
-    password = buf10[21:(len(buf10)-1)]       # cut out yes/no part
+    password = buf10[21:(len(buf10)-1)]             # cut out yes/no part
 
     if (debug == 1):
-        print("password > ",password)
+        print("password = ",password)
+        
+    #read the off cycles line
+    buf10 = reader.readline()                      # read entire line
+    off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
+    this_off_cycle = int(off_cycles_cfg)
+
+    if (debug == 1):
+        print("off cycles > %d",this_off_cycle)
+        
+    #read the downstream line
+    buf10 = reader.readline()                      # read entire line
+    downstream = buf10[21:(len(buf10)-1)]          # cut out just the stretch limit part
+    this_downstream = int(downstream)
+
+    if (debug == 1):
+        print("downstream > %d",this_downstream)       
+        
 
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
@@ -498,13 +518,13 @@ while(True):
     
     print ("OFF CYCLES = ", off_cycles)
     ser.write(bytes("xxx3\r",'UTF-8'))    
-    if off_cycles > 1:
-        if GPIO.input(13):
+    if off_cycles > 0:
+        if GPIO.input(11):
+            GPIO.output(11,GPIO.LOW)
             if last_pin_rd == 0:
-                #off_cycles = 99
+                off_cycles = 99999
                 last_pin_rd = 1
         else:
-            print ("pin13 is low")
             last_pin_rd = 0;
                    
     #length_o_address=len(a_string)
@@ -529,15 +549,6 @@ while(True):
         if word.isdigit():
             numbers.append(int(word))
             w = int(word)
-
-    if w == 1:
-        if last_w == 1999:
-            hack_offset = last_w
-        else:
-            hack_offset = 0
-
-    w = w + hack_offset
-
 
 
     test_payload = "*a%06d" % (w)
@@ -567,7 +578,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > 5):         #     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         # 300    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -622,7 +633,9 @@ while(True):
                 os.write(pipe_fifo,test_payload.encode())
                 
                 off_cycles = 1
-            
+
+                GPIO.output(12, GPIO.LOW)
+
                 length_in = 0.001
                 buf = "%1.3f\r\n" % (length_in)
                 while file_rec_count < 10000:
@@ -865,7 +878,7 @@ while(True):
             
             pix = im.load()
 
-            thresh = 75
+            thresh = 225
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
@@ -1061,7 +1074,19 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .00722      #.00859
+            length_in = lth * .0086
+
+            if length_in > 3.6:
+                length_in = 2.6000
+            if length_in < 2.7:
+                length_in = 2.6000
+            if y_left > y_right:
+                if (y_left - y_right) > 30:
+                    length_in = 2.6000
+            if y_right > y_left:
+                if (y_right - y_left) > 30:
+                    length_in = 2.6000
+
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
 
