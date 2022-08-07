@@ -1,8 +1,8 @@
-Chain Name         : TP6
-BaseLine File name : BaseLine_TP6
-Output file Name   : TP6_result
+Chain Name         : TP2
+BaseLine File name : BaseLine_TP2
+Output file Name   : TP2_result
 Output file type   : absolute
-Stretch Limit      : 3.110
+Stretch Limit      : 4.400
 Paint Enable       : no
 Create BaseLine    : no
 Chain Direction    : rtl
@@ -10,7 +10,7 @@ Send Email         : yes
 Dest Email Address : sargentw@gmail.com
 Orig Email Address : cwm.sn.1021@gmail.com
 Email Password     : qoiasyxzcoytkvtf
-Off_Cycles         : 500
+Off_Cycles         : 10
 Paint Downstream   : 4
 parm2              : 2
 parm3              : 3

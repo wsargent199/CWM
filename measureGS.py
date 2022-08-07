@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=15")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=400")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -108,7 +108,7 @@ MyDateTime = datetime.datetime(2016,1,3,8,30,20)
 #honda_FN  = "asdfghjkl"
 
 counter=0
-first_cycle = 1
+first_cycle = 0
 
 
 
@@ -212,6 +212,8 @@ GPIO.setwarnings(False)
 GPIO.setup(40,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
 
@@ -372,7 +374,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     if (debug == 1):
         print("password > ",password)
-            
+        
     #read the off cycles line
     buf10 = reader.readline()                      # read entire line
     off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
@@ -387,10 +389,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     this_downstream = int(downstream)
 
     if (debug == 1):
-        print("downstream > ",this_downstream)       
-        
-                
-
+        print("downstream > ",this_downstream)     
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
 filenamex = "/home/pi/CWM_DATA"
@@ -518,7 +517,8 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    
+    ser.write(bytes("xxx3\r",'UTF-8'))    
+
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -527,6 +527,7 @@ while(True):
                 last_pin_rd = 1
         else:
             last_pin_rd = 0;
+
     #length_o_address=len(a_string)
     #print(length_o_address)
     
@@ -587,7 +588,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > this_off_cycle):         #    20 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         #    60  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -871,8 +872,10 @@ while(True):
             print ("converted to gray",(millisec1 - millisec))
 
             #(thresh, blackAndWhiteImage) = cv2.threshold(gray, 225, 255, cv2.THRESH_BINARY)
-            flipped = cv2.flip(gray,0)
-            cv2.imwrite((lines),flipped)
+
+            #flipped = cv2.flip(gray,0)
+            #cv2.imwrite((lines),flipped)
+            cv2.imwrite((lines),gray)
             millisec1 = int(round(time.time() * 1000))   # take time snapshot
             print ("converted to b+w",(millisec1 - millisec))
             #cv2.imshow('Before blur', frame)
@@ -885,7 +888,7 @@ while(True):
             
             pix = im.load()
 
-            thresh = 75
+            thresh = 225
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
@@ -976,9 +979,12 @@ while(True):
                     
             state = 0
             sub_state = 0
-            idx_x = 639
+            #idx_x = 639
             idx_y = 790
-            #idx_x = 5
+            if (1):
+                idx_x = 639
+            else:
+                idx_x = 5
             millisec1 = int(round(time.time() * 1000)) 
             print ("donehlf",(millisec1 - millisec))
             
@@ -1081,19 +1087,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0112      #.00859
-
-            if length_in > 3.6:
-                length_in = 2.6000
-            if length_in < 2.7:
-                length_in = 2.6000
-            if y_left > y_right:
-                if (y_left - y_right) > 30:
-                    length_in = 2.6000
-            if y_right > y_left:
-                if (y_right - y_left) > 30:
-                    length_in = 2.6000
-
+            length_in = lth * .0089
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
 
