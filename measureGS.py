@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=30")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=15")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -214,6 +214,7 @@ GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
+
 GPIO.setup(37, GPIO.OUT)
 
 
@@ -371,8 +372,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     if (debug == 1):
         print("password > ",password)
-        
-        
+            
     #read the off cycles line
     buf10 = reader.readline()                      # read entire line
     off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
@@ -389,6 +389,8 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     if (debug == 1):
         print("downstream > ",this_downstream)       
         
+                
+
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
 filenamex = "/home/pi/CWM_DATA"
@@ -516,8 +518,7 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    ser.write(bytes("xxx3\r",'UTF-8'))
-
+    
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -550,7 +551,7 @@ while(True):
             w = int(word)
 
     if w == 1:
-        if last_w == 1999:
+        if last_w > 580 and last_w < 585:
             hack_offset = last_w
         else:
             hack_offset = 0
@@ -586,7 +587,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > this_off_cycle):         #  40   $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         #    20 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -852,7 +853,7 @@ while(True):
 
         ser.write(bytes("-\r",'UTF-8'))
         zed = zed+1
-        gray = cv2.GaussianBlur(frame, (17,17), 0)
+        gray = cv2.GaussianBlur(frame, (11,11), 0)
 
         #lines = ("/home/pi/CWM_DATA/box%d.jpg" % (w))
         lines = ("/mnt/ramdisk/box%d.jpg" % (w))
@@ -1080,7 +1081,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .01015      #.00859
+            length_in = lth * .0112      #.00859
 
             if length_in > 3.6:
                 length_in = 2.6000
