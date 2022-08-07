@@ -37,8 +37,8 @@
 
 
 #define USER_ID             "Will"
-#define DEVICE_ID           "CWM_TP3"
-#define DEVICE_CREDENTIAL   "T123TP3a!"
+#define DEVICE_ID           "CWM_TP1"
+#define DEVICE_CREDENTIAL   "T123TP1a!"
 
 #define LED_PIN 0
 #define PAINT_EN_PIN 1
@@ -71,7 +71,7 @@ float        vibration_alarm_resetpoint = 50;
 float        current_alarm_setpoint = 3.0;
 float        current_alarm_resetpoint = 1.0;
 
-float        temperature_alarm_setpoint = 125;
+float        temperature_alarm_setpoint = 140;
 float        temperature_alarm_resetpoint = 75;
 
 float       variablea;
@@ -777,19 +777,7 @@ int main(int argc, char *argv[])
 							  if (in_char == 0x0a) break;
 							  if (indexx  < 10) indexx++;
 							} 
-							
-							printf(" %d ",rxbuffer[0]);
-							printf(" %d ",rxbuffer[1]);
-							printf(" %d ",rxbuffer[2]);
-							printf(" %d ",rxbuffer[3]);
-							printf(" %d ",rxbuffer[4]);
-							printf(" %d ",rxbuffer[5]);
-							printf(" %d \n",rxbuffer[6]);
-							//printf(rxbuffer[2]);
-							//printf(rxbuffer[3]);
-							//printf(rxbuffer[4]);
-                                                        //printf(rxbuffer[5]);
-                                                        //printf(rxbuffer[6]);
+
 
 							if ((rxbuffer[indexx-3] == 0x2e)&&(indexx==6))
 							{
@@ -820,7 +808,7 @@ int main(int argc, char *argv[])
 									temperature_alarm = 1;
 									tempy = tempx;
 									pson datatemp = tempy;
-									thing.call_endpoint("TP3_overtemp_email", datatemp); 
+									thing.call_endpoint("TP1_overtemp_email", datatemp); 
 								  }
 
 
