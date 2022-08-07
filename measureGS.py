@@ -78,7 +78,6 @@ off_cycles   = 1
 last_pin_rd  = 0
 
 hack_offset = 0;
-first_cycle = 1;
 
 
 
@@ -98,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=25")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=400")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -109,6 +108,7 @@ MyDateTime = datetime.datetime(2016,1,3,8,30,20)
 #honda_FN  = "asdfghjkl"
 
 counter=0
+first_cycle = 1
 
 
 
@@ -189,8 +189,8 @@ now = datetime.datetime.now()
 buf = (now.strftime("%Y-%m-%d %H:%M:%S"))
 
 # load default values in case there is no cfg.csv file   ** and create the variable ..  maybe nesc / maybe not,  python confuses me
-chain_name = "Heat Treat Line1"
-BaseLine_File_Name = "baseline.csv"
+chain_name = "TP2"
+BaseLine_File_Name = "TP2_baseline.csv"
 output_file_name = "resultx.csv"
 output_file_type = "delta"
 stretch_limit = "0.0125"
@@ -200,7 +200,7 @@ this_baseline_len = 2.500
 chain_direction = 'rtl'
 send_email = 'yes'
 fromaddr = "cwm.sn.1021@gmail.com"
-toaddr = "sargentw@gmail.com"
+toaddr = "sargentw@gmail.com;wsargent199@yahoo.com"
 password = "digilube1021"
 off_cycles_cfg = "1000"
 downstream = "10"
@@ -374,7 +374,6 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     if (debug == 1):
         print("password > ",password)
         
-        
     #read the off cycles line
     buf10 = reader.readline()                      # read entire line
     off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
@@ -519,8 +518,9 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    ser.write(bytes("xxx3\r",'UTF-8'))
- 
+    ser.write(bytes("xxx3\r",'UTF-8'))    
+
+
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -529,7 +529,7 @@ while(True):
                 last_pin_rd = 1
         else:
             last_pin_rd = 0;
-                   
+
     #length_o_address=len(a_string)
     #print(length_o_address)
     
@@ -552,6 +552,14 @@ while(True):
         if word.isdigit():
             numbers.append(int(word))
             w = int(word)
+
+    if w == 1:
+        if last_w > 580 and last_w < 585:
+            hack_offset = last_w
+        else:
+            hack_offset = 0
+
+    w = w + hack_offset
 
 
 
@@ -577,13 +585,12 @@ while(True):
             survey_state = 3            # if we have just finished a survey then send the stuff 
         
         if(survey_state == 0):
-    
-            off_cycles += 1
+            
             if (first_cycle == 1):
                 first_cycle = 0
-                off_cycles = 1
-            
-            if (off_cycles > this_off_cycle):	#*****************************************************200
+            else:
+                off_cycles += 1
+            if (off_cycles > this_off_cycle):         #   60  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -593,9 +600,6 @@ while(True):
         print ("survey_state = ", (survey_state))
         print ("  off_cycles = ", (off_cycles))
         
-        test_payload = "*g%06d" % (off_cycles)
-        os.write(pipe_fifo,test_payload.encode())
-    
         
         #if (sequence == 0):
         #    saved_TS = (now.strftime("%Y-%m-%d %H:%M:%S"))
@@ -636,11 +640,13 @@ while(True):
 
             if(survey_state == 3):  # if survey just completed then prepare and send the data 
                 
-                off_cycles = 1
+                
                 test_payload = "*a%06d" % (777777)
                 os.write(pipe_fifo,test_payload.encode())
 
                 GPIO.output(12, GPIO.LOW)
+
+                off_cycles = 1
             
                 length_in = 0.001
                 buf = "%1.3f\r\n" % (length_in)
@@ -650,12 +656,12 @@ while(True):
                 fcsv.close()
 
 
-                zipFilesInDir('/home/pi/CWM_DATA/', zipfilename, lambda name : 'png' in name)
-                #zipFilesInDir('/mnt/ramdisk/', zipfilename, lambda name : 'png' in name)
+                #zipFilesInDir('/home/pi/CWM_DATA/', zipfilename, lambda name : 'png' in name)
+                zipFilesInDir('/mnt/ramdisk/', zipfilename, lambda name : 'png' in name)
                 
                 # Get a list of all the file paths that ends with .png in aspecified directory
-                fileList = glob.glob('/home/pi/CWM_DATA/*.png')
-                #fileList = glob.glob('/mnt/ramdisk/*.png')
+                #fileList = glob.glob('/home/pi/CWM_DATA/*.png')
+                fileList = glob.glob('/mnt/ramdisk/*.png')
 
                 # Iterate over the list of filepaths & remove each file.
                 for filePath in fileList:
@@ -666,8 +672,8 @@ while(True):
                         nothing = 1
 
                 # Get a list of all the file paths that ends with .jpg in aspecified directory
-                fileList = glob.glob('/home/pi/CWM_DATA/*.jpg')
-                #fileList = glob.glob('/mnt/ramdisk/*.jpg')
+                #fileList = glob.glob('/home/pi/CWM_DATA/*.jpg')
+                fileList = glob.glob('/mnt/ramdisk/*.jpg')
                 # Iterate over the list of filepaths & remove each file.
                 for filePath in fileList:
                     try:
@@ -675,7 +681,9 @@ while(True):
                     except:
                         #print("Error while deleting file : ", filePath)
                         nothing = 1
-                
+
+                survey_state = 0
+                off_cycles = 1
 
                 if send_email == "yes":
                     msg = MIMEMultipart()
@@ -721,8 +729,8 @@ while(True):
                     part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
                     msg.attach(part)
 
-                    filename = "/home/pi/mu_code/measureGS.py"   #destz   #"/home/pi/CWM_DATA/cfg.txt"  *or*   = destz
-                    attachment = open("/home/pi/mu_code/measureGS.py", "rb")      #destz
+                    filename = destz                 #destz #"/home/pi/CWM_DATA/cfg.txt"  *or*   = destz
+                    attachment = open(destz,"rb")    #("/home/pi/mu_code/measureGS.py", "rb")      #destz
                     part = MIMEBase('application', 'octet-stream')
                     part.set_payload((attachment).read())
                     encoders.encode_base64(part)
@@ -733,7 +741,12 @@ while(True):
                     server.starttls()
                     server.login(fromaddr, password)
                     text = msg.as_string()
-                    server.sendmail(fromaddr, toaddr, text)
+                    print(toaddr)
+                    recipients = ['sargentw@gmail.com','wsargent199@yahoo.com']
+                    print(recipients)
+                    #toaddr = recipients
+                    print(toaddr)
+                    server.sendmail(fromaddr, recipients, text)
                     server.quit()
 
                 if send_email == "no":
@@ -804,8 +817,8 @@ while(True):
 
    
             #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"
-            filenamex = "/home/pi/CWM_DATA/"
-            #filenamex = "/mnt/ramdisk/"
+            #filenamex = "/home/pi/CWM_DATA/"
+            filenamex = "/mnt/ramdisk/"
             filenamey = str(output_file_name)
             filenamez = "_%d.csv" % (sequence)
             filename = filenamex + filenamey + filenamez
@@ -847,28 +860,24 @@ while(True):
         zed = zed+1
         gray = cv2.GaussianBlur(frame, (11,11), 0)
 
-        lines = ("/home/pi/CWM_DATA/box%d.jpg" % (w))
-        #lines = ("/mnt/ramdisk/box%d.jpg" % (w))
+        #lines = ("/home/pi/CWM_DATA/box%d.jpg" % (w))
+        lines = ("/mnt/ramdisk/box%d.jpg" % (w))
         new_frame = 2   # voodoo
 
 
         if (new_frame==2):
             new_frame=0
 
-            #post_process_FN = filename = ("/mnt/ramdisk/boo2_%d.png"  %(w))
-            post_process_FN = filename = ("/home/pi/CWM_DATA/boo2_%d.png"  %(w))
+            post_process_FN = filename = ("/mnt/ramdisk/boo2_%d.png"  %(w))
 
             w = w + 1
 
             millisec1 = int(round(time.time() * 1000))   # take time snapshot
             print ("converted to gray",(millisec1 - millisec))
 
-            
-            #flipped = cv2.flip(gray,0)
-            #cv2.imwrite((lines),flipped)
-            
-            cv2.imwrite((lines),gray)
-            
+            #(thresh, blackAndWhiteImage) = cv2.threshold(gray, 225, 255, cv2.THRESH_BINARY)
+            flipped = cv2.flip(gray,0)
+            cv2.imwrite((lines),flipped)
             millisec1 = int(round(time.time() * 1000))   # take time snapshot
             print ("converted to b+w",(millisec1 - millisec))
             #cv2.imshow('Before blur', frame)
@@ -881,7 +890,7 @@ while(True):
             
             pix = im.load()
 
-            thresh = 75
+            thresh = 225
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
@@ -1077,19 +1086,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0108
-
-            if length_in > 3.6:
-                length_in = 2.6000
-            if length_in < 2.7:
-                length_in = 2.6000
-            if y_left > y_right:
-                if (y_left - y_right) > 30:
-                    length_in = 2.6000
-            if y_right > y_left:
-                if (y_right - y_left) > 30:
-                    length_in = 2.6000
-
+            length_in = lth * .0095
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
 
@@ -1099,7 +1096,7 @@ while(True):
             #    file_rec_count = file_rec_count+1
 
 
-            draw.line((90,90,350,90), fill = 0, width = 185)   #in from right , down from top
+            draw.line((90,90,350,90), fill = 0, width = 150)   #in from right , down from top
 
 
             #draw.text((last_good_lft_scan+10,y_left+10), buf, fill = (0))
@@ -1129,7 +1126,6 @@ while(True):
 
             crap = baseline_data[w-1]
             this_baseline_len = float(crap)
-            this_baseline_len = 2.51
             buf = "Baseline Link Length % 1.3fin" % (this_baseline_len)
             ImageDraw.Draw(r).text((10,85), buf, font = font , fill = (255))
 
@@ -1146,7 +1142,7 @@ while(True):
 
             if output_file_type == "absolute" :
                 if length_in > this_stretch_limit :
-                    buf = "Alarm = False"
+                    buf = "Alarm = True"
                     mark_this_link = "true"
                     alarm_appender = "link %d     over size limit   length = %1.3f in\r" %((w-1),length_in)
                     alarm_list = alarm_list + alarm_appender
@@ -1162,7 +1158,6 @@ while(True):
 
 
             r.save(post_process_FN)
-            #r.save("/home/pi/mu_code/pp_img.png")
 
             #last_w = w
 
@@ -1178,9 +1173,9 @@ while(True):
                     fcsv.write(buf1)
                     file_rec_count = file_rec_count+1
 
-            imagex = cv2.imread(post_process_FN,0)
+            #imagex = cv2.imread(post_process_FN,0)
             #cv2.imshow('frame', imagex)
-            #cv2.waitKey(10)
+            #cv2.waitKey(1000)
 
             millisec1 = int(round(time.time() * 1000)) 
             print ("done2",(millisec1 - millisec))
@@ -1189,7 +1184,6 @@ while(True):
                 ser.write(bytes("link processed ALARM\r",'UTF-8'))
             else:
                 ser.write(bytes(" link processed OK  \r",'UTF-8'))
-                
 
             if mark_this_link == "true" :
                     if paint_enable == "yes" :
