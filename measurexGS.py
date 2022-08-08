@@ -520,7 +520,7 @@ while(True):
        
     
     print ("OFF CYCLES = ", off_cycles)
-    ser.write(bytes("xxx3\r",'UTF-8')) 
+    
 
     if off_cycles > 0:
         if GPIO.input(11):
@@ -553,7 +553,8 @@ while(True):
             numbers.append(int(word))
             w = int(word)
 
-
+    if w==1:
+        ser.write(bytes("xxx3\r",'UTF-8')) 
 
     test_payload = "*a%06d" % (w)
     os.write(pipe_fifo,test_payload.encode())
@@ -1189,10 +1190,12 @@ while(True):
 
             if mark_this_link == "true" :
                     if paint_enable == "yes" :
-                        ser.write(bytes("xxx3\r",'UTF-8'))
-            else:
-                    if paint_enable == "yes" :
-                        ser.write(bytes("yyy3\r",'UTF-8'))
+                        print( "sening paint command" )
+                        #ser.write(bytes("xxx3\r",'UTF-8'))
+            #else:
+                    #if paint_enable == "yes" :
+                        #print( "sening paint command" )
+                        #ser.write(bytes("yyy3\r",'UTF-8'))
 
 # When everything done, release the capture
 GPIO.output(18, GPIO.LOW)
