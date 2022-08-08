@@ -37,8 +37,8 @@
 
 
 #define USER_ID             "Will"
-#define DEVICE_ID           "CWM_TP2A"
-#define DEVICE_CREDENTIAL   "T123TP2Aa!"
+#define DEVICE_ID           "CWM_TP3"
+#define DEVICE_CREDENTIAL   "T123TP3a!"
 
 #define LED_PIN 0
 #define PAINT_EN_PIN 1
@@ -71,7 +71,7 @@ float        vibration_alarm_resetpoint = 50;
 float        current_alarm_setpoint = 3.0;
 float        current_alarm_resetpoint = 1.0;
 
-float        temperature_alarm_setpoint = 140;
+float        temperature_alarm_setpoint = 155;
 float        temperature_alarm_resetpoint = 75;
 
 float       variablea;
@@ -808,7 +808,7 @@ int main(int argc, char *argv[])
 									temperature_alarm = 1;
 									tempy = tempx;
 									pson datatemp = tempy;
-									thing.call_endpoint("TP2A_overtemp_email", datatemp); 
+									thing.call_endpoint("TP3_overtemp_email", datatemp); 
 								  }
 
 

@@ -1,8 +1,8 @@
-Chain Name         : TP2A
-BaseLine File name : BaseLine_TP2A
-Output file Name   : TP2A_result
+Chain Name         : TP3
+BaseLine File name : BaseLine_TP3
+Output file Name   : TP3_result
 Output file type   : absolute
-Stretch Limit      : 4.400
+Stretch Limit      : 3.05
 Paint Enable       : no
 Create BaseLine    : no
 Chain Direction    : rtl
