@@ -37,8 +37,8 @@
 
 
 #define USER_ID             "Will"
-#define DEVICE_ID           "CWM_TP1A"
-#define DEVICE_CREDENTIAL   "T123TP1Aa!"
+#define DEVICE_ID           "CWM_TP2"
+#define DEVICE_CREDENTIAL   "T123TP2a!"
 
 #define LED_PIN 0
 #define PAINT_EN_PIN 1
@@ -808,7 +808,7 @@ int main(int argc, char *argv[])
 									temperature_alarm = 1;
 									tempy = tempx;
 									pson datatemp = tempy;
-									thing.call_endpoint("TP1A_overtemp_email", datatemp); 
+									thing.call_endpoint("TP2_overtemp_email", datatemp); 
 								  }
 
 
