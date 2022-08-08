@@ -37,8 +37,8 @@
 
 
 #define USER_ID             "Will"
-#define DEVICE_ID           "CWM_TP4"
-#define DEVICE_CREDENTIAL   "T123TP4a!"
+#define DEVICE_ID           "CWM_AAA"
+#define DEVICE_CREDENTIAL   "T123AAAa!"
 
 #define LED_PIN 0
 #define PAINT_EN_PIN 1
@@ -776,7 +776,8 @@ int main(int argc, char *argv[])
 							  rxbuffer[indexx] = in_char;
 							  if (in_char == 0x0a) break;
 							  if (indexx  < 10) indexx++;
-							}
+							} 
+
 
 							if ((rxbuffer[indexx-3] == 0x2e)&&(indexx==6))
 							{
@@ -807,7 +808,7 @@ int main(int argc, char *argv[])
 									temperature_alarm = 1;
 									tempy = tempx;
 									pson datatemp = tempy;
-									thing.call_endpoint("TP4_overtemp_email", datatemp); 
+									thing.call_endpoint("TP4A_overtemp_email", datatemp); 
 								  }
 
 
