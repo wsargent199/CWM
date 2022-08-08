@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=100")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=15")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -202,7 +202,8 @@ send_email = 'yes'
 fromaddr = "cwm.sn.1021@gmail.com"
 toaddr = "sargentw@gmail.com;wsargent199@yahoo.com"
 password = "digilube1021"
-
+off_cycles_cfg = "1000"
+downstream = "10"
 
 
 
@@ -211,9 +212,9 @@ GPIO.setwarnings(False)
 GPIO.setup(40,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
+
 GPIO.setup(37, GPIO.OUT)
 
 
@@ -371,6 +372,24 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     if (debug == 1):
         print("password > ",password)
+            
+    #read the off cycles line
+    buf10 = reader.readline()                      # read entire line
+    off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
+    this_off_cycle = int(off_cycles_cfg)
+
+    if (debug == 1):
+        print("off cycles > ",this_off_cycle)
+        
+    #read the downstream line
+    buf10 = reader.readline()                      # read entire line
+    downstream = buf10[21:(len(buf10)-1)]          # cut out just the stretch limit part
+    this_downstream = int(downstream)
+
+    if (debug == 1):
+        print("downstream > ",this_downstream)       
+        
+                
 
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
@@ -496,7 +515,7 @@ while(True):
                 millisec = int(round(time.time() * 1000)) 
                 ser.write(bytes("+\r",'UTF-8'))
     a_string=ser.readline()
- 
+    
     
     print ("OFF CYCLES = ", off_cycles)
     
@@ -531,8 +550,8 @@ while(True):
             numbers.append(int(word))
             w = int(word)
     if w==1:
-        ser.write(bytes("xxx3\r",'UTF-8')) 
-        
+        ser.write(bytes("xxx3\r",'UTF-8'))
+
     if w == 1:
         if last_w > 580 and last_w < 585:
             hack_offset = last_w
@@ -570,7 +589,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > 1000):         #     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         #    20 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -882,7 +901,7 @@ while(True):
             idx_x = 640
             idx_y = 790
             #if ((image_stream == 10):   # should be 10 you know
-            if (chain_direction == 'rtl'):   
+            if (1):   
                 while idx_x < resolution_x:
                     while idx_y > 20:    #idx_y < resolution_y:
                         #print ( idx_x,idx_y,first_top_bar,middle_bar,bottom_bar )
@@ -960,10 +979,8 @@ while(True):
             state = 0
             sub_state = 0
             idx_x = 639
-            if (chain_direction == 'rtl'):
-                idx_y = 790
-            else:
-                idx_x = 5
+            idx_y = 790
+            #idx_x = 5
             millisec1 = int(round(time.time() * 1000)) 
             print ("donehlf",(millisec1 - millisec))
             
@@ -1066,7 +1083,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0115      #.00859
+            length_in = lth * .0112      #.00859
 
             if length_in > 3.6:
                 length_in = 2.6000
@@ -1179,7 +1196,7 @@ while(True):
 
             if mark_this_link == "true" :
                     if paint_enable == "yes" :
-                        print( "sening paint command" )
+                        print( "sening paint command")
                         #ser.write(bytes("xxx3\r",'UTF-8'))
             #else:
                     #if paint_enable == "yes" :
