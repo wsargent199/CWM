@@ -1,6 +1,6 @@
-Chain Name         : TP2
-BaseLine File name : BaseLine_TP2
-Output file Name   : TP2_result
+Chain Name         : TP2A
+BaseLine File name : BaseLine_TP2A
+Output file Name   : TP2A_result
 Output file type   : absolute
 Stretch Limit      : 4.400
 Paint Enable       : no
@@ -10,7 +10,7 @@ Send Email         : yes
 Dest Email Address : sargentw@gmail.com
 Orig Email Address : cwm.sn.1021@gmail.com
 Email Password     : qoiasyxzcoytkvtf
-Off_Cycles         : 10
+Off_Cycles         : 500
 Paint Downstream   : 4
 parm2              : 2
 parm3              : 3

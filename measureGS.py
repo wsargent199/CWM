@@ -108,7 +108,7 @@ MyDateTime = datetime.datetime(2016,1,3,8,30,20)
 #honda_FN  = "asdfghjkl"
 
 counter=0
-first_cycle = 0
+first_cycle = 1
 
 
 
@@ -212,7 +212,6 @@ GPIO.setwarnings(False)
 GPIO.setup(40,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
 
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
@@ -389,7 +388,9 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     this_downstream = int(downstream)
 
     if (debug == 1):
-        print("downstream > ",this_downstream)     
+        print("downstream > ",this_downstream)       
+                
+
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
 filenamex = "/home/pi/CWM_DATA"
@@ -518,7 +519,6 @@ while(True):
     
     print ("OFF CYCLES = ", off_cycles)
 
-
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -552,8 +552,7 @@ while(True):
             w = int(word)
             
     if w==1:
-        ser.write(bytes("xxx3\r",'UTF-8'))                
-          
+        ser.write(bytes("xxx3\r",'UTF-8')) 
 
     if w == 1:
         if last_w > 580 and last_w < 585:
@@ -592,7 +591,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > this_off_cycle):         #    60  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         #   60  $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -645,7 +644,9 @@ while(True):
                 
                 test_payload = "*a%06d" % (777777)
                 os.write(pipe_fifo,test_payload.encode())
+
                 GPIO.output(12, GPIO.LOW)
+
                 off_cycles = 1
             
                 length_in = 0.001
@@ -876,10 +877,8 @@ while(True):
             print ("converted to gray",(millisec1 - millisec))
 
             #(thresh, blackAndWhiteImage) = cv2.threshold(gray, 225, 255, cv2.THRESH_BINARY)
-
-            #flipped = cv2.flip(gray,0)
-            #cv2.imwrite((lines),flipped)
-            cv2.imwrite((lines),gray)
+            flipped = cv2.flip(gray,0)
+            cv2.imwrite((lines),flipped)
             millisec1 = int(round(time.time() * 1000))   # take time snapshot
             print ("converted to b+w",(millisec1 - millisec))
             #cv2.imshow('Before blur', frame)
@@ -983,12 +982,9 @@ while(True):
                     
             state = 0
             sub_state = 0
-            #idx_x = 639
+            idx_x = 639
             idx_y = 790
-            if (1):
-                idx_x = 639
-            else:
-                idx_x = 5
+            #idx_x = 5
             millisec1 = int(round(time.time() * 1000)) 
             print ("donehlf",(millisec1 - millisec))
             
@@ -1091,7 +1087,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0089
+            length_in = lth * .0095
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
 
