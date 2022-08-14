@@ -21,6 +21,7 @@ import csv
 import shutil
 import glob
 import threading
+import serial
 
 
 import numpy as np
@@ -50,7 +51,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=20")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=100")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 
 
 #camera.resolution = (1024, 768)
@@ -61,9 +62,21 @@ imagex = np.empty((768, 1024, 1), dtype=np.uint8)
 
 keepingon = 1
 
+ser = serial.Serial(
+ port='/dev/ttyS0',
+ baudrate = 115200,
+ parity = serial.PARITY_NONE,
+ stopbits=serial.STOPBITS_ONE,
+ bytesize=serial.EIGHTBITS
+)
+
 while(keepingon):
+	
+    ser.write(bytes("+\r",'UTF-8'))
+    sleep(1)
 	k=0
 	while k<4:
+		ser.write(bytes("+\r",'UTF-8'))
 		ret, frame = cap.read() 
 		k = k+1
 	cv2.imwrite((lines1),frame)
@@ -138,4 +151,5 @@ server.quit()
 
 	
 cap.release()
+ser.release()
 cv2.destroyAllWindows()
