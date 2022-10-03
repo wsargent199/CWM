@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=15")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=500")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -201,9 +201,10 @@ chain_direction = 'rtl'
 send_email = 'yes'
 fromaddr = "cwm.sn.1021@gmail.com"
 toaddr = "sargentw@gmail.com;wsargent199@yahoo.com"
-password = "digilube1021"
+password = "qoiasyxzcoytkvtf"
 off_cycles_cfg = "1000"
 downstream = "10"
+
 
 
 
@@ -212,11 +213,10 @@ GPIO.setwarnings(False)
 GPIO.setup(40,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(13, GPIO.IN)
+GPIO.setup(37, GPIO.OUT)
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
-
-GPIO.setup(37, GPIO.OUT)
-
 
 GPIO.output(37, GPIO.HIGH)
 
@@ -360,7 +360,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
         print("to address > ",toaddr)
 
     #read the origin address line
-    buf10 = reader.readline()                       # read entire line
+    buf10 = reader.readline()                 # read entire line
     fromaddr = buf10[21:(len(buf10)-1)]       # cut out yes/no part
 
     if (debug == 1):
@@ -368,11 +368,11 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     #read the email password line
     buf10 = reader.readline()                       # read entire line
-    password = buf10[21:(len(buf10)-1)]       # cut out yes/no part
+    password = buf10[21:(len(buf10)-1)]             # cut out yes/no part
 
     if (debug == 1):
-        print("password > ",password)
-            
+        print("password = ",password)
+        
     #read the off cycles line
     buf10 = reader.readline()                      # read entire line
     off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
@@ -387,9 +387,15 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     this_downstream = int(downstream)
 
     if (debug == 1):
-        print("downstream > ",this_downstream)       
+        print("downstream > ",this_downstream)   
         
-                
+        #read the measurement method line
+        buf10 = reader.readline()                      # read entire line
+        m_method = buf10[21:(len(buf10)-1)]            # cut out just the stretch limit part
+
+        if (debug == 1):
+            print("measurement methode = ",m_method)        
+        
 
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
@@ -518,7 +524,7 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    
+ 
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -527,6 +533,7 @@ while(True):
                 last_pin_rd = 1
         else:
             last_pin_rd = 0;
+                   
     #length_o_address=len(a_string)
     #print(length_o_address)
     
@@ -550,17 +557,7 @@ while(True):
             numbers.append(int(word))
             w = int(word)
     if w==1:
-        ser.write(bytes("xxx3\r",'UTF-8'))
-
-    if w == 1:
-        if last_w > 580 and last_w < 585:
-            hack_offset = last_w
-        else:
-            hack_offset = 0
-
-    w = w + hack_offset
-
-
+        ser.write(bytes("xxx5\r",'UTF-8')) 
 
     test_payload = "*a%06d" % (w)
     os.write(pipe_fifo,test_payload.encode())
@@ -589,7 +586,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > this_off_cycle):         #    20 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         # 300    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -642,9 +639,11 @@ while(True):
                 
                 test_payload = "*a%06d" % (777777)
                 os.write(pipe_fifo,test_payload.encode())
-                GPIO.output(12, GPIO.LOW)
+                
                 off_cycles = 1
-            
+
+                GPIO.output(12, GPIO.LOW)
+
                 length_in = 0.001
                 buf = "%1.3f\r\n" % (length_in)
                 while file_rec_count < 10000:
@@ -887,21 +886,17 @@ while(True):
             
             pix = im.load()
 
-            thresh = 75
+            thresh = 225
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
 
 
-            if image_stream < 10:
-                image_stream += 1
-
-            state = 0
-            sub_state = 0
-            idx_x = 640
-            idx_y = 790
-            #if ((image_stream == 10):   # should be 10 you know
-            if (1):   
+              if (m_method == 'MV'):  
+                state = 0
+                sub_state = 0
+                idx_x = 640
+                idx_y = 790 
                 while idx_x < resolution_x:
                     while idx_y > 20:    #idx_y < resolution_y:
                         #print ( idx_x,idx_y,first_top_bar,middle_bar,bottom_bar )
@@ -976,16 +971,96 @@ while(True):
                     idx_y = first_top_bar + 20
                     
                     
-            state = 0
-            sub_state = 0
-            idx_x = 639
-            idx_y = 790
-            #idx_x = 5
-            millisec1 = int(round(time.time() * 1000)) 
-            print ("donehlf",(millisec1 - millisec))
-            
-            while idx_x > 20:
-                while idx_y > 20:
+                state = 0
+                sub_state = 0
+                idx_x = 639
+                idx_y = 790
+                millisec1 = int(round(time.time() * 1000)) 
+                print ("donehlf",(millisec1 - millisec))
+                
+                while idx_x > 20:
+                    while idx_y > 20:
+                        if state == 0:
+                            if pix[idx_x,idx_y] > 127:
+                                sub_state += 1
+                                if sub_state > 25:
+                                    state = 1
+                                    top_bar = 0
+                            else:
+                                sub_state = 0
+                            if math.fmod(idx_x,4) == 0:
+                                pix[idx_x,idx_y] = 0
+                        elif state == 1:
+                            if pix[idx_x,idx_y] > 127:
+                                top_bar += 1
+                            else:
+                                if (pix[idx_x,idx_y] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and(pix[idx_x,idx_y-3] < 127):
+                                    state = 2
+                                    first_top_bar = idx_y
+                                    top_bar = 0
+                                    sub_state = 0
+                            if math.fmod(idx_x,4) == 0:
+                                pix[idx_x,idx_y] = 0
+
+                        elif state == 2:
+                            if (pix[idx_x,idx_y] > 127) and (pix[idx_x,idx_y-1] > 127) and (pix[idx_x,idx_y-2] > 127) and (pix[idx_x,idx_y-3] > 127) and (pix[idx_x,idx_y-4] > 127) and (pix[idx_x,idx_y-5] > 127) and (pix[idx_x,idx_y-6] > 127) and (pix[idx_x,idx_y-7] > 127) and (pix[idx_x,idx_y-8] > 127):
+                                state = 3
+                                sub_state = 0
+                                middle_bar = 0
+                            else:
+
+                                top_bar += 1
+                            if math.fmod(idx_x,4) == 0:
+                                pix[idx_x,idx_y] = 255
+                        elif state == 3:
+                            if pix[idx_x,idx_y] > 127:
+                                middle_bar += 1
+                            else:
+                                if (pix[idx_x,idx_y] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and (pix[idx_x,idx_y-3] < 127) and (pix[idx_x,idx_y-4] < 127):
+                                    state = 4
+                                    bottom_bar = 0
+                                    tran = idx_y
+                                    if idx_x == 639:
+                                        lst_tran = tran
+                                    last_middle_bar = middle_bar
+                                    idx_y = 10
+                            if math.fmod(idx_x,4) == 0:		
+                                pix[idx_x,idx_y] = 00
+
+                        elif state == 4:
+                            if pix[idx_x,idx_y] < 127:
+                                bottom_bar += 1
+                            else:
+                                state = 5
+                            if math.fmod(idx_x,4) == 0:
+                                pix[idx_x,idx_y] = 255
+
+                        elif state == 5:
+                            pix[idx_x,idx_y] = 0
+
+                        idx_y -= 1
+                        
+                    scan_results[idx_x] = ([idx_x,top_bar,middle_bar,bottom_bar,tran])
+                    idx_x -= 1
+                    if (tran >(lst_tran+5)) or (tran <(lst_tran+-5)) or (middle_bar > (last_middle_bar+5)) or (middle_bar < (last_middle_bar-5)):
+                        idx_x = 10
+                    else:
+                        lst_tran = tran
+                        last_middle_bar = middle_bar
+                        last_good_lft_scan = idx_x + 4
+
+                    state = 1
+                    idx_y = first_top_bar + 20
+                    
+            if (m_method == 'Linear'):  
+                state = 0
+                sub_state = 0
+                idx_x = 640
+                idx_y = 790 
+                
+                while idx_y > 20:    #idx_y < resolution_y:
+                    #print ( idx_x,idx_y,first_top_bar,middle_bar,bottom_bar )
+                    print (state)
                     if state == 0:
                         if pix[idx_x,idx_y] > 127:
                             sub_state += 1
@@ -994,17 +1069,17 @@ while(True):
                                 top_bar = 0
                         else:
                             sub_state = 0
-                        if math.fmod(idx_x,4) == 0:
-                            pix[idx_x,idx_y] = 0
+                        pix[idx_x,idx_y] = 0
                     elif state == 1:
                         if pix[idx_x,idx_y] > 127:
                             top_bar += 1
                         else:
-                            if (pix[idx_x,idx_y] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and(pix[idx_x,idx_y-3] < 127):
+                            if (pix[idx_x,idx_y] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and (pix[idx_x,idx_y-3] < 127) and (pix[idx_x,idx_y-4] < 127) and (pix[idx_x,idx_y-5] < 127):
                                 state = 2
                                 first_top_bar = idx_y
                                 top_bar = 0
                                 sub_state = 0
+
                         if math.fmod(idx_x,4) == 0:
                             pix[idx_x,idx_y] = 0
 
@@ -1014,7 +1089,6 @@ while(True):
                             sub_state = 0
                             middle_bar = 0
                         else:
-
                             top_bar += 1
                         if math.fmod(idx_x,4) == 0:
                             pix[idx_x,idx_y] = 255
@@ -1022,16 +1096,15 @@ while(True):
                         if pix[idx_x,idx_y] > 127:
                             middle_bar += 1
                         else:
-                            if (pix[idx_x,idx_y] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and (pix[idx_x,idx_y-3] < 127) and (pix[idx_x,idx_y-4] < 127):
+                            if (pix[idx_x,idx_y-4] < 127) and (pix[idx_x,idx_y-1] < 127) and (pix[idx_x,idx_y-2] < 127) and (pix[idx_x,idx_y-3] < 127):
                                 state = 4
                                 bottom_bar = 0
                                 tran = idx_y
-                                if idx_x == 639:
+                                if idx_x == 640:
                                     lst_tran = tran
-                                last_middle_bar = middle_bar
-                                idx_y = 10
-                        if math.fmod(idx_x,4) == 0:		
-                            pix[idx_x,idx_y] = 00
+                                idx_y =  2           #resolution_y - 1
+                        if math.fmod(idx_x,4) == 0:
+                            pix[idx_x,idx_y] = 0
 
                     elif state == 4:
                         if pix[idx_x,idx_y] < 127:
@@ -1043,20 +1116,34 @@ while(True):
 
                     elif state == 5:
                         pix[idx_x,idx_y] = 0
-
                     idx_y -= 1
+                        
+                        
+                    print (idx_x,idx_y,top_bar,middle_bar,bottom_bar,tran )
+                    scan_results[idx_x] = ([idx_x,top_bar,middle_bar,bottom_bar,tran])
                     
-                scan_results[idx_x] = ([idx_x,top_bar,middle_bar,bottom_bar,tran])
-                idx_x -= 1
-                if (tran >(lst_tran+5)) or (tran <(lst_tran+-5)) or (middle_bar > (last_middle_bar+5)) or (middle_bar < (last_middle_bar-5)):
-                    idx_x = 10
-                else:
-                    lst_tran = tran
-                    last_middle_bar = middle_bar
-                    last_good_lft_scan = idx_x + 4
-
-                state = 1
-                idx_y = first_top_bar + 20
+                    
+                last_good_lft_scan = 0
+                last_good_rt_scan = 0
+                scan_results[last_good_lft_scan][2] = 0    
+                scan_results[last_good_rt_scan][2] = 0 
+                
+                zedder = 1
+                zeddery = (tran + (middle_bar/2))
+                print (zeddery)
+                while (zedder+idx_x < 1220)and(pix[(idx_x+zedder),zeddery] == 255):
+                    zedder = zedder+1
+                print (zedder)
+                last_good_rt_scan = idx_x+zedder
+                scan_results[last_good_rt_scan][4] = zeddery 
+                
+                zedder = 1
+                while (idx_x-zedder > 20)and(pix[(idx_x-zedder),zeddery] == 255):
+                    zedder = zedder+1
+                print (zedder)
+                last_good_lft_scan = idx_x-zedder
+                
+                scan_results[last_good_lft_scan][4] = zeddery 
 
             millisec1 = int(round(time.time() * 1000))     
             print ("done processing",(millisec1 - millisec))
@@ -1083,7 +1170,7 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0112      #.00859
+            length_in = lth * .008294  #.00715      #.0086    x1.16 bloom factor
 
             if length_in > 3.6:
                 length_in = 2.6000
@@ -1186,22 +1273,15 @@ while(True):
             #cv2.imshow('frame', imagex)
             #cv2.waitKey(1000)
 
-            millisec1 = int(round(time.time() * 1000)) 
-            print ("done2",(millisec1 - millisec))
-            ser.write(bytes("!\r",'UTF-8'))
-            if mark_this_link == "true" :
-                ser.write(bytes("link processed ALARM\r",'UTF-8'))
-            else:
-                ser.write(bytes(" link processed OK  \r",'UTF-8'))
-
             if mark_this_link == "true" :
                     if paint_enable == "yes" :
-                        print( "sening paint command")
-                        #ser.write(bytes("xxx3\r",'UTF-8'))
+                        print( "sening paint command" )
+                        ser.write(bytes("xxx5\r",'UTF-8'))
             #else:
                     #if paint_enable == "yes" :
                         #print( "sening paint command" )
                         #ser.write(bytes("yyy3\r",'UTF-8'))
+
 
 # When everything done, release the capture
 GPIO.output(18, GPIO.LOW)
