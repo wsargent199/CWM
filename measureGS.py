@@ -97,7 +97,7 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 cap.set(38,3)     # would love to set buffsize to 1 ,,  but 3 is as low as it goes ???
-os.system("v4l2-ctl -c exposure=15")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
+os.system("v4l2-ctl -c exposure=200")               # exposure values min=006 max=906 default=800    higher number = longer exposure  doi!
 #millisec1 = int(round(time.time() * 1000))   # take time snapshot
 #print (" VideoCap init complete ",(millisec1 - millisec))
 
@@ -201,9 +201,10 @@ chain_direction = 'rtl'
 send_email = 'yes'
 fromaddr = "cwm.sn.1021@gmail.com"
 toaddr = "sargentw@gmail.com;wsargent199@yahoo.com"
-password = "digilube1021"
+password = "qoiasyxzcoytkvtf"
 off_cycles_cfg = "1000"
 downstream = "10"
+
 
 
 
@@ -212,11 +213,10 @@ GPIO.setwarnings(False)
 GPIO.setup(40,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(38,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(36,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(13, GPIO.IN)
+GPIO.setup(37, GPIO.OUT)
 GPIO.setup(11, GPIO.OUT)
 GPIO.setup(12, GPIO.OUT)
-
-GPIO.setup(37, GPIO.OUT)
-
 
 GPIO.output(37, GPIO.HIGH)
 
@@ -360,7 +360,7 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
         print("to address > ",toaddr)
 
     #read the origin address line
-    buf10 = reader.readline()                       # read entire line
+    buf10 = reader.readline()                 # read entire line
     fromaddr = buf10[21:(len(buf10)-1)]       # cut out yes/no part
 
     if (debug == 1):
@@ -368,11 +368,11 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
 
     #read the email password line
     buf10 = reader.readline()                       # read entire line
-    password = buf10[21:(len(buf10)-1)]       # cut out yes/no part
+    password = buf10[21:(len(buf10)-1)]             # cut out yes/no part
 
     if (debug == 1):
-        print("password > ",password)
-            
+        print("password = ",password)
+        
     #read the off cycles line
     buf10 = reader.readline()                      # read entire line
     off_cycles_cfg = buf10[21:(len(buf10)-1)]      # cut out just the stretch limit part
@@ -389,14 +389,13 @@ with open("/home/pi/CWM_DATA/cfg.txt", 'r') as reader:
     if (debug == 1):
         print("downstream > ",this_downstream)   
         
-	#read the measurement method line
-	buf10 = reader.readline()                      # read entire line
-	m_method = buf10[21:(len(buf10)-1)]            # cut out just the stretch limit part
+        #read the measurement method line
+        buf10 = reader.readline()                      # read entire line
+        m_method = buf10[21:(len(buf10)-1)]            # cut out just the stretch limit part
 
-	if (debug == 1):
-		print("measurement methode = ",m_method)         
+        if (debug == 1):
+            print("measurement methode = ",m_method)        
         
-                
 
 
 #filenamex = "/media/pi/" + thumb_name_pure + "/CWM/"     #results_%d.csv" % (sequence)
@@ -525,7 +524,7 @@ while(True):
     
     
     print ("OFF CYCLES = ", off_cycles)
-    
+ 
     if off_cycles > 0:
         if GPIO.input(11):
             GPIO.output(11,GPIO.LOW)
@@ -534,6 +533,7 @@ while(True):
                 last_pin_rd = 1
         else:
             last_pin_rd = 0;
+                   
     #length_o_address=len(a_string)
     #print(length_o_address)
     
@@ -557,17 +557,7 @@ while(True):
             numbers.append(int(word))
             w = int(word)
     if w==1:
-        ser.write(bytes("xxx3\r",'UTF-8'))
-
-    if w == 1:
-        if last_w > 580 and last_w < 585:
-            hack_offset = last_w
-        else:
-            hack_offset = 0
-
-    w = w + hack_offset
-
-
+        ser.write(bytes("xxx5\r",'UTF-8')) 
 
     test_payload = "*a%06d" % (w)
     os.write(pipe_fifo,test_payload.encode())
@@ -596,7 +586,7 @@ while(True):
                 first_cycle = 0
             else:
                 off_cycles += 1
-            if (off_cycles > this_off_cycle):         #    20 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+            if (off_cycles > this_off_cycle):         # 300    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
                 off_cycles = 0
                 survey_state = 2        # go straight to survey in progress  ( armed reserved for dashboard frc survey button )
             
@@ -649,9 +639,11 @@ while(True):
                 
                 test_payload = "*a%06d" % (777777)
                 os.write(pipe_fifo,test_payload.encode())
-                GPIO.output(12, GPIO.LOW)
+                
                 off_cycles = 1
-            
+
+                GPIO.output(12, GPIO.LOW)
+
                 length_in = 0.001
                 buf = "%1.3f\r\n" % (length_in)
                 while file_rec_count < 10000:
@@ -880,8 +872,9 @@ while(True):
             print ("converted to gray",(millisec1 - millisec))
 
             #(thresh, blackAndWhiteImage) = cv2.threshold(gray, 225, 255, cv2.THRESH_BINARY)
-            flipped = cv2.flip(gray,0)
-            cv2.imwrite((lines),flipped)
+            #flipped = cv2.flip(gray,0)
+            #cv2.imwrite((lines),flipped)
+            cv2.imwrite((lines),gray)
             millisec1 = int(round(time.time() * 1000))   # take time snapshot
             print ("converted to b+w",(millisec1 - millisec))
             #cv2.imshow('Before blur', frame)
@@ -894,7 +887,7 @@ while(True):
             
             pix = im.load()
 
-            thresh = 75
+            thresh = 225
             fn = lambda x : 255 if x > thresh else 0
             r = im.convert('L').point(fn, mode='1')
             pix = r.load()
@@ -1152,8 +1145,6 @@ while(True):
                 last_good_lft_scan = idx_x-zedder
                 
                 scan_results[last_good_lft_scan][4] = zeddery 
-                
-            
 
             millisec1 = int(round(time.time() * 1000))     
             print ("done processing",(millisec1 - millisec))
@@ -1180,18 +1171,23 @@ while(True):
             print ("donea",(millisec1 - millisec))
 
             lth = last_good_rt_scan -last_good_lft_scan
-            length_in = lth * .0109      #.00859
 
-            if length_in > 3.6:
-                length_in = 2.6000
-            if length_in < 2.7:
-                length_in = 2.6000
-            if y_left > y_right:
-                if (y_left - y_right) > 30:
+            if m_method == 'MV':
+                length_in = lth * .008294 
+            if m_method == 'Linear':
+                length_in = lth * .007835
+
+            if m_method == 'MV':
+                if length_in > 3.6:
                     length_in = 2.6000
-            if y_right > y_left:
-                if (y_right - y_left) > 30:
+                if length_in < 1.7:
                     length_in = 2.6000
+                if y_left > y_right:
+                    if (y_left - y_right) > 30:
+                        length_in = 2.6000
+                if y_right > y_left:
+                    if (y_right - y_left) > 30:
+                        length_in = 2.6000
 
             buf = "% 1.3f inch" % (length_in)
             #print (buf)
@@ -1283,22 +1279,15 @@ while(True):
             #cv2.imshow('frame', imagex)
             #cv2.waitKey(1000)
 
-            millisec1 = int(round(time.time() * 1000)) 
-            print ("done2",(millisec1 - millisec))
-            ser.write(bytes("!\r",'UTF-8'))
-            if mark_this_link == "true" :
-                ser.write(bytes("link processed ALARM\r",'UTF-8'))
-            else:
-                ser.write(bytes(" link processed OK  \r",'UTF-8'))
-
             if mark_this_link == "true" :
                     if paint_enable == "yes" :
-                        print( "sening paint command")
-                        #ser.write(bytes("xxx3\r",'UTF-8'))
+                        print( "sening paint command" )
+                        ser.write(bytes("xxx5\r",'UTF-8'))
             #else:
                     #if paint_enable == "yes" :
                         #print( "sening paint command" )
                         #ser.write(bytes("yyy3\r",'UTF-8'))
+
 
 # When everything done, release the capture
 GPIO.output(18, GPIO.LOW)
